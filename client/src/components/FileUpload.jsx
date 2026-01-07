@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Upload, X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -62,7 +62,11 @@ const FileUpload = ({ onUploadSuccess }) => {
             if (onUploadSuccess) onUploadSuccess();
         } catch (error) {
             console.error(error);
-            toast.error(error.response?.data?.message || 'Error importing users');
+            if (!error.response) {
+                toast.error('Server Unreachable. Is the backend running?');
+            } else {
+                toast.error(error.response?.data?.message || 'Error importing users');
+            }
         } finally {
             setUploading(false);
         }
@@ -71,9 +75,12 @@ const FileUpload = ({ onUploadSuccess }) => {
     return (
         <div className="w-full max-w-xl mx-auto mb-8">
             <div
-                className={`relative flex flex-col items-center justify-center w-full h-48 sm:h-64 border-2 border-dashed rounded-xl transition-all duration-200 ease-in-out
-          ${dragActive ? 'border-blue-500 bg-blue-50 scale-[1.02]' : 'border-slate-300 bg-white hover:bg-slate-50'}
-          ${file ? 'border-green-500 bg-green-50' : ''}
+                className={`relative group flex flex-col items-center justify-center w-full h-52 sm:h-64 border-2 border-dashed rounded-2xl transition-all duration-300 ease-in-out overflow-hidden
+          ${dragActive
+                        ? 'border-indigo-500 bg-indigo-50/50 scale-[1.01] shadow-xl shadow-indigo-500/10'
+                        : 'border-slate-300 bg-white hover:border-indigo-400 hover:bg-slate-50/80 shadow-sm hover:shadow-md'
+                    }
+          ${file ? 'border-emerald-500 bg-emerald-50/30' : ''}
         `}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -89,19 +96,26 @@ const FileUpload = ({ onUploadSuccess }) => {
                 />
 
                 {file ? (
-                    <div className="z-20 text-center p-4 w-full">
-                        <div className="flex items-center justify-center mb-3">
-                            <div className="bg-green-100 p-3 rounded-full">
-                                <FileText className="w-8 h-8 text-green-600" />
+                    <div className="z-20 text-center p-6 w-full animate-fade-in-up">
+                        <div className="relative inline-block mb-4">
+                            <div className="absolute inset-0 bg-emerald-200 rounded-full blur opacity-40 animate-pulse"></div>
+                            <div className="relative bg-white p-3 rounded-full shadow-md border border-emerald-100">
+                                <FileText className="w-10 h-10 text-emerald-500" />
+                            </div>
+                            <div className="absolute -top-1 -right-1 bg-emerald-500 text-white p-1 rounded-full border-2 border-white">
+                                <CheckCircle className="w-3 h-3" />
                             </div>
                         </div>
-                        <p className="text-slate-900 font-medium text-lg truncate max-w-[90%] mx-auto">{file.name}</p>
-                        <p className="text-slate-500 text-sm mb-4">{(file.size / 1024).toFixed(2)} KB</p>
+
+                        <div className="space-y-1 mb-6">
+                            <p className="text-slate-900 font-bold text-lg truncate max-w-[80%] mx-auto tracking-tight">{file.name}</p>
+                            <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">{(file.size / 1024).toFixed(2)} KB • CSV Document</p>
+                        </div>
 
                         <div className="flex items-center justify-center gap-3">
                             <button
                                 onClick={(e) => { e.preventDefault(); removeFile(); }}
-                                className="px-4 py-2 text-sm font-medium text-red-600 bg-red-100 rounded-lg hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors z-30 relative"
+                                className="px-5 py-2.5 text-sm font-semibold text-rose-600 bg-white border border-rose-200 rounded-xl hover:bg-rose-50 hover:border-rose-300 focus:outline-none focus:ring-4 focus:ring-rose-100 transition-all shadow-sm relative z-30"
                                 disabled={uploading}
                             >
                                 Remove
@@ -109,35 +123,35 @@ const FileUpload = ({ onUploadSuccess }) => {
                             <button
                                 onClick={(e) => { e.preventDefault(); handleUpload(); }}
                                 disabled={uploading}
-                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors z-30 relative flex items-center gap-2"
+                                className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl hover:from-indigo-700 hover:to-violet-700 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all shadow-lg shadow-indigo-500/25 disabled:opacity-80 disabled:cursor-not-allowed relative z-30 flex items-center gap-2 group"
                             >
                                 {uploading ? (
                                     <>
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        <Loader2 className="w-4 h-4 animate-spin" />
                                         Importing...
                                     </>
                                 ) : (
                                     <>
-                                        <CheckCircle className="w-4 h-4" />
-                                        Import Users
+                                        <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+                                        Upload File
                                     </>
                                 )}
                             </button>
                         </div>
                     </div>
                 ) : (
-                    <div className="text-center p-4">
-                        <div className="flex items-center justify-center mb-3">
-                            <div className="bg-blue-100 p-3 rounded-full">
-                                <Upload className="w-8 h-8 text-blue-600" />
-                            </div>
+                    <div className="text-center p-6 pointer-events-none">
+                        <div className="bg-slate-100 p-4 rounded-full inline-block mb-4 group-hover:bg-indigo-50 group-hover:scale-110 transition-all duration-300">
+                            <Upload className="w-8 h-8 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                         </div>
-                        <p className="text-lg font-medium text-slate-700 mb-1">
+                        <p className="text-lg font-bold text-slate-800 mb-2">
                             Drop your CSV file here
                         </p>
-                        <p className="text-sm text-slate-500">
-                            or click to browse
-                        </p>
+                        <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
+                            <span>or</span>
+                            <span className="text-indigo-600 font-semibold underline decoration-2 decoration-indigo-100 underline-offset-4 group-hover:decoration-indigo-200">browse to upload</span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-4 font-medium uppercase tracking-wide">Supports .csv files only</p>
                     </div>
                 )}
             </div>
