@@ -8,6 +8,13 @@ const dbFactory = (fileName) => Datastore.create({
   timestampData: true
 });
 
-const users = dbFactory('users.db');
+let users = dbFactory('users.db');
+
+// Function to reload the database (useful after file deletion)
+const reloadDatabase = () => {
+  users = dbFactory('users.db');
+  return users;
+};
 
 module.exports = users;
+module.exports.reload = reloadDatabase;
